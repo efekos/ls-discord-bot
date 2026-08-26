@@ -19,6 +19,8 @@ import com.learnspigot.bot.notice.NoticeCommand
 import com.learnspigot.bot.notice.NoticeListener
 import com.learnspigot.bot.profile.ProfileCommand
 import com.learnspigot.bot.profile.ProfileListener
+import com.learnspigot.bot.reference.ReferenceAutocompleteListener
+import com.learnspigot.bot.reference.ReferenceCommand
 import com.learnspigot.bot.reputation.LeaderboardMessage
 import com.learnspigot.bot.reputation.command.AddReputationCommand
 import com.learnspigot.bot.reputation.command.ChannelInput
@@ -130,6 +132,7 @@ class Bot {
             NoticeListener(),
             VoteBanListener(),
             MrBeastWatcher(),
+            ReferenceAutocompleteListener()
         )
     }
 
@@ -163,6 +166,8 @@ class Bot {
         )
 
         lamp.accept(JDAVisitors.slashCommands(jda))
+
+        ReferenceCommand().register()
     }
 
 }
