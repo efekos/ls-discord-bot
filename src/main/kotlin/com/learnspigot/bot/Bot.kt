@@ -23,6 +23,7 @@ import com.learnspigot.bot.profile.ProfileCommand
 import com.learnspigot.bot.profile.ProfileListener
 import com.learnspigot.bot.reference.ReferenceAutocompleteListener
 import com.learnspigot.bot.reference.ReferenceCommand
+import com.learnspigot.bot.reference.ReferenceListener
 import com.learnspigot.bot.reputation.LeaderboardMessage
 import com.learnspigot.bot.reputation.command.*
 import com.learnspigot.bot.showcase.ShowcaseListener
@@ -157,6 +158,7 @@ class Bot {
             VoteBanListener(),
             MrBeastWatcher(),
             ReferenceAutocompleteListener(),
+            ReferenceListener()
         )
     }
 

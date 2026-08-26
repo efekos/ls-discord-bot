@@ -31,6 +31,9 @@ data class IndexEntry(
             .append("n", BsonString(name))
             .append("u", BsonString(url))
             .append("k", BsonInt32(kind.ordinal))
+
+    val formatted get() = "${kind.emoji.formatted}[`${simpleName}`](<${url}>)"
+
 }
 
 enum class IndexEntryKind(

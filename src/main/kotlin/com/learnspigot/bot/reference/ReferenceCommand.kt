@@ -70,7 +70,7 @@ class ReferenceCommand {
         entry: IndexEntry,
     ) {
         event
-            .replyFormat("# ${entry.kind.emoji.formatted}[`${entry.simpleName}`](<${entry.url}>)")
+            .replyFormat("# ${entry.formatted}")
             .setEphemeral(
                 event.channelType != ChannelType.GUILD_PUBLIC_THREAD ||
                     event.guildChannel

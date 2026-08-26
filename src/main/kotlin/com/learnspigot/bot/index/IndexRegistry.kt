@@ -69,7 +69,7 @@ class IndexRegistry {
                     .toString()
             val s = codec.decode(reader, DecoderContext.builder().build()).getInt32("size")!!.value
             reader.resetState()
-            for (_ in 0 until s) {
+            for (n in 0 until s) {
                 entries.add(codec.decode(reader, DecoderContext.builder().build()).toIndexEntry(entrypoint))
                 reader.resetState()
             }
