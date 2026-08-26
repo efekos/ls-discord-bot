@@ -1,6 +1,7 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.learnspigot.bot
 
-import com.learnspigot.bot.moderation.MrBeastWatcher
 import com.learnspigot.bot.counting.CountingCommand
 import com.learnspigot.bot.counting.CountingListener
 import com.learnspigot.bot.counting.VoteBanCommand
@@ -15,6 +16,7 @@ import com.learnspigot.bot.knowledgebase.EndPollCommand
 import com.learnspigot.bot.knowledgebase.KnowledgebaseCommand
 import com.learnspigot.bot.knowledgebase.KnowledgebaseListener
 import com.learnspigot.bot.knowledgebase.ReputationVotesListener
+import com.learnspigot.bot.moderation.MrBeastWatcher
 import com.learnspigot.bot.notice.NoticeCommand
 import com.learnspigot.bot.notice.NoticeListener
 import com.learnspigot.bot.profile.ProfileCommand
@@ -22,11 +24,7 @@ import com.learnspigot.bot.profile.ProfileListener
 import com.learnspigot.bot.reference.ReferenceAutocompleteListener
 import com.learnspigot.bot.reference.ReferenceCommand
 import com.learnspigot.bot.reputation.LeaderboardMessage
-import com.learnspigot.bot.reputation.command.AddReputationCommand
-import com.learnspigot.bot.reputation.command.ChannelInput
-import com.learnspigot.bot.reputation.command.ChannelInputResolver
-import com.learnspigot.bot.reputation.command.RemoveReputationCommand
-import com.learnspigot.bot.reputation.command.ReputationCommand
+import com.learnspigot.bot.reputation.command.*
 import com.learnspigot.bot.showcase.ShowcaseListener
 import com.learnspigot.bot.starboard.StarboardListener
 import com.learnspigot.bot.suggestion.SuggestionListener
@@ -53,41 +51,47 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.utils.ChunkingFilter
 import net.dv8tion.jda.api.utils.MemberCachePolicy
 import revxrsal.commands.jda.JDALamp
-import revxrsal.commands.jda.JDAVisitors
 import revxrsal.commands.jda.actor.SlashActorFactory
 import revxrsal.commands.jda.actor.SlashCommandActor
 import java.time.Duration
 import java.time.Instant
 
 class Bot {
-
     companion object {
         private lateinit var env: Dotenv
 
         lateinit var jda: JDA private set
 
-        fun fromEnv(name: String): String = env.get(name) ?: System.getenv(name) ?: "".also { NullPointerException("Unable to find ENV Variable: $name").printStackTrace() }
-        fun fromEnvUnsafe(name: String): String? = env.get(name) ?: System.getenv(name)
+        fun fromEnv(name: String): String =
+            env.get(name) ?: System.getenv(name) ?: "".also { NullPointerException("Unable to find ENV Variable: $name").printStackTrace() }
+
+        fun fromEnvOrNull(name: String): String? = env.get(name) ?: System.getenv(name)
     }
 
     init {
         val startTime = Instant.now()
 
-        env = Dotenv.configure().systemProperties().ignoreIfMissing().load()
+        env =
+            Dotenv
+                .configure()
+                .systemProperties()
+                .ignoreIfMissing()
+                .load()
 
-        jda = JDABuilder.createDefault(fromEnv("BOT_TOKEN"))
-            .setActivity(Activity.watching("learnspigot.com"))
-            .enableIntents(
-                GatewayIntent.GUILD_MESSAGES,
-                GatewayIntent.GUILD_INVITES,
-                GatewayIntent.GUILD_MEMBERS,
-                GatewayIntent.DIRECT_MESSAGES,
-                GatewayIntent.MESSAGE_CONTENT
-            )
-            .setMemberCachePolicy(MemberCachePolicy.ALL)
-            .setChunkingFilter(ChunkingFilter.ALL)
-            .build()
-            .awaitReady()
+        jda =
+            JDABuilder
+                .createDefault(fromEnv("BOT_TOKEN"))
+                .setActivity(Activity.watching("learnspigot.com"))
+                .enableIntents(
+                    GatewayIntent.GUILD_MESSAGES,
+                    GatewayIntent.GUILD_INVITES,
+                    GatewayIntent.GUILD_MEMBERS,
+                    GatewayIntent.DIRECT_MESSAGES,
+                    GatewayIntent.MESSAGE_CONTENT,
+                ).setMemberCachePolicy(MemberCachePolicy.ALL)
+                .setChunkingFilter(ChunkingFilter.ALL)
+                .build()
+                .awaitReady()
 
         println("JDA Connected! Establishing database connection and Initialising Registries...")
 
@@ -101,12 +105,30 @@ class Bot {
 
         registerEvents()
 
-        guild.updateCommands().addCommands(
-            Commands.context(Command.Type.MESSAGE, "Set vote").setDefaultPermissions(DefaultMemberPermissions.enabledFor(PermissionRole.STUDENT)),
-            Commands.context(Command.Type.MESSAGE, "Set Tutorial vote").setDefaultPermissions(DefaultMemberPermissions.enabledFor(PermissionRole.EXPERT)),
-            Commands.context(Command.Type.MESSAGE, "Set Project vote").setDefaultPermissions(DefaultMemberPermissions.enabledFor(PermissionRole.EXPERT)),
-            Commands.context(Command.Type.MESSAGE, "Help Notice").setDefaultPermissions(DefaultMemberPermissions.enabledFor(PermissionRole.TRIAL_HELPER)),
-         ).complete()
+        guild
+            .updateCommands()
+            .addCommands(
+                Commands
+                    .context(
+                        Command.Type.MESSAGE,
+                        "Set vote",
+                    ).setDefaultPermissions(DefaultMemberPermissions.enabledFor(PermissionRole.STUDENT)),
+                Commands
+                    .context(
+                        Command.Type.MESSAGE,
+                        "Set Tutorial vote",
+                    ).setDefaultPermissions(DefaultMemberPermissions.enabledFor(PermissionRole.EXPERT)),
+                Commands
+                    .context(
+                        Command.Type.MESSAGE,
+                        "Set Project vote",
+                    ).setDefaultPermissions(DefaultMemberPermissions.enabledFor(PermissionRole.EXPERT)),
+                Commands
+                    .context(
+                        Command.Type.MESSAGE,
+                        "Help Notice",
+                    ).setDefaultPermissions(DefaultMemberPermissions.enabledFor(PermissionRole.TRIAL_HELPER)),
+            ).complete()
 
         registerCommands()
 
@@ -134,15 +156,16 @@ class Bot {
             NoticeListener(),
             VoteBanListener(),
             MrBeastWatcher(),
-            ReferenceAutocompleteListener()
+            ReferenceAutocompleteListener(),
         )
     }
 
     fun registerCommands() {
-        val lamp = JDALamp
-            .builder<SlashCommandActor>()
-            .parameterTypes { it.addParameterType(ChannelInput::class.java, ChannelInputResolver()) }
-            .build()
+        val lamp =
+            JDALamp
+                .builder<SlashCommandActor>()
+                .parameterTypes { it.addParameterType(ChannelInput::class.java, ChannelInputResolver()) }
+                .build()
 
         lamp.register(
             EndPollCommand(),
@@ -164,12 +187,11 @@ class Bot {
             VCCommand(),
             FriendInviteCommand(),
             VoteBanCommand(),
-            IndexCommand()
+            IndexCommand(),
         )
 
         lamp.accept(OverriddenSlashVisitor.slashCommands(jda, SlashActorFactory.defaultFactory()))
 
         ReferenceCommand().register()
     }
-
 }

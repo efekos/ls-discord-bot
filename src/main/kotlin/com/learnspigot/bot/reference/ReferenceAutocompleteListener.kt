@@ -6,7 +6,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 
 // TODO Lamp suggestion providers don't support name-value pairs, yet.
 class ReferenceAutocompleteListener : ListenerAdapter() {
-
     companion object {
         lateinit var command: ReferenceCommand
     }
@@ -15,22 +14,42 @@ class ReferenceAutocompleteListener : ListenerAdapter() {
     val mappingProvider = MappingProvider()
 
     override fun onCommandAutoCompleteInteraction(event: CommandAutoCompleteInteractionEvent) {
-        if(event.focusedOption.name=="entry")
-            event.replyChoices(referenceEntryProvider.suggest(
-                event.focusedOption.value,event.getOption("version")?.asString
-            )).queue()
-        if(event.focusedOption.name=="version")
-            event.replyChoiceStrings(mappingProvider.getSuggestions(event.focusedOption.value))
-                .queue()
+        when (event.focusedOption.name) {
+            "entry" -> {
+                event
+                    .replyChoices(
+                        referenceEntryProvider.suggest(
+                            event.focusedOption.value,
+                            event.getOption("version")?.asString,
+                        ),
+                    ).queue()
+            }
+
+            "version" -> {
+                event
+                    .replyChoiceStrings(mappingProvider.getSuggestions(event.focusedOption.value))
+                    .queue()
+            }
+        }
     }
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-        if(event.name != "reference") return
-        if(event.subcommandName=="nms")command.onReferenceNms(event,
-            event.getOption("version")!!.asString,
-            event.getOption("entry")!!.asString)
-        if(event.subcommandName=="class")command.onReference(event,
-            event.getOption("entry")!!.asString)
-    }
+        if (event.name != "reference") return
+        when (event.subcommandName) {
+            "nms" -> {
+                command.onReferenceNms(
+                    event,
+                    event.getOption("version")!!.asString,
+                    event.getOption("entry")!!.asString,
+                )
+            }
 
+            "class" -> {
+                command.onReference(
+                    event,
+                    event.getOption("entry")!!.asString,
+                )
+            }
+        }
+    }
 }

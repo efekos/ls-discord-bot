@@ -13,17 +13,19 @@ import com.learnspigot.bot.index.IndexEntry
 import com.learnspigot.bot.index.IndexEntryKind
 import java.util.function.Consumer
 
-class GitHubScraper(val user: String, val repo: String) : Scraper {
-
+class GitHubScraper(
+    val user: String,
+    val repo: String,
+) : Scraper {
     val entrypoint = "https://api.github.com/repos/$user/$repo/contents/src/main/java"
-    val repository = "https://github.com/$user/$repo"
 
-    val found: MutableList<IndexEntry> = mutableListOf()
+    private val repository = "https://github.com/$user/$repo"
+    private val found: MutableList<IndexEntry> = mutableListOf()
 
     override fun scrape(afterFinish: Consumer<List<IndexEntry>>) {
         Scraper.mainExecutor.submit {
             runCatching {
-                if(canLog)println("[${Thread.currentThread().name}] starting to scrape $user/$repo")
+                if (canLog) println("[${Thread.currentThread().name}] starting to scrape $user/$repo")
                 for (response in Http.getJson(entrypoint, Array<GitHubContentsResponse>::class.java) ?: emptyArray()) {
                     if (response.type == "file" && response.name.endsWith(".java")) scrapeFile(response)
                     if (response.type == "dir") scrapeDirectory(response)
@@ -34,7 +36,7 @@ class GitHubScraper(val user: String, val repo: String) : Scraper {
     }
 
     fun scrapeDirectory(dirContents: GitHubContentsResponse) {
-        if(canLog) println("[${Thread.currentThread().name}] opening directory ${dirContents.url}")
+        if (canLog) println("[${Thread.currentThread().name}] opening directory ${dirContents.url}")
         val responses = Http.getJson(dirContents.url, Array<GitHubContentsResponse>::class.java) ?: emptyArray()
         for (response in responses) {
             when (response.type) {
@@ -45,60 +47,65 @@ class GitHubScraper(val user: String, val repo: String) : Scraper {
     }
 
     fun scrapeFile(contents: GitHubContentsResponse) {
-            if(canLog) println("[${Thread.currentThread().name}] opening file ${contents.url}")
-            var pack: String? = null
-            runCatching {
-                Http.getPlain(contents.download_url!!)?.use { stream ->
-                    val parseRes = JavaParser().parse(stream)
-                        parseRes.ifSuccessful { unit ->
-                            fun visitRecursive(node: Node, prefix: String) {
-
-                                if (node is PackageDeclaration && pack == null) pack = node.nameAsString
-                                if (node is ClassOrInterfaceDeclaration) {
-                                    val kind = if (node.isInterface) IndexEntryKind.INTERFACE
-                                    else if (node.isAbstract) IndexEntryKind.ABSTRACT_CLASS
-                                    else IndexEntryKind.CLASS
-                                    found.add(
-                                        IndexEntry(
-                                            "$prefix${node.nameAsString}", "$pack.$prefix${node.nameAsString}",
-                                            "https://github.com/$user/$repo/blob/${contents.path}", kind,
-                                            repository
-                                        )
-                                    )
-                                    for (item in node.childNodes)
-                                        visitRecursive(item,"${node.nameAsString}.")
+        if (canLog) println("[${Thread.currentThread().name}] opening file ${contents.url}")
+        var pack: String? = null
+        runCatching {
+            Http.getPlain(contents.downloadUrl!!)?.use { stream ->
+                val parseRes = JavaParser().parse(stream)
+                parseRes.ifSuccessful { unit ->
+                    fun visitRecursive(
+                        node: Node,
+                        prefix: String,
+                    ) {
+                        if (node is PackageDeclaration && pack == null) pack = node.nameAsString
+                        if (node is ClassOrInterfaceDeclaration) {
+                            val kind =
+                                when {
+                                    node.isInterface -> IndexEntryKind.INTERFACE
+                                    node.isAbstract -> IndexEntryKind.ABSTRACT_CLASS
+                                    else -> IndexEntryKind.CLASS
                                 }
-                                if (node is EnumDeclaration || node is RecordDeclaration) {
-                                    val kind = if (node is EnumDeclaration) IndexEntryKind.ENUM else IndexEntryKind.RECORD
-                                    found.add(
-                                        IndexEntry(
-                                            "$prefix${node.nameAsString}", "$pack.$prefix${node.nameAsString}",
-                                            "https://github.com/$user/$repo/blob/${contents.path}", kind,
-                                            repository
-                                        )
-                                    )
-                                    for (item in node.childNodes)
-                                        visitRecursive(item,"${node.nameAsString}.")
-                                }
-                                if (node is AnnotationDeclaration) {
-                                    found.add(
-                                        IndexEntry(
-                                            "$prefix${node.nameAsString}",
-                                            "$pack.$prefix${node.nameAsString}",
-                                            "https://github.com/$user/$repo/blob/${contents.path}",
-                                            IndexEntryKind.ANNOTATION,
-                                            repository
-                                        )
-                                    )
-                                    for (item in node.childNodes)
-                                        visitRecursive(item,"${node.nameAsString}.")
-                                }
-                            }
-
-                            for (node in unit.childNodes) visitRecursive(node,"")
+                            found.add(
+                                IndexEntry(
+                                    "$prefix${node.nameAsString}",
+                                    "$pack.$prefix${node.nameAsString}",
+                                    "$repository/blob/${contents.path}",
+                                    kind,
+                                    repository,
+                                ),
+                            )
+                            for (item in node.childNodes) visitRecursive(item, "${node.nameAsString}.")
                         }
-                }
-            }.exceptionOrNull()?.printStackTrace()
-    }
+                        if (node is EnumDeclaration || node is RecordDeclaration) {
+                            val kind = if (node is EnumDeclaration) IndexEntryKind.ENUM else IndexEntryKind.RECORD
+                            found.add(
+                                IndexEntry(
+                                    "$prefix${node.nameAsString}",
+                                    "$pack.$prefix${node.nameAsString}",
+                                    "$repository/blob/${contents.path}",
+                                    kind,
+                                    repository,
+                                ),
+                            )
+                            for (item in node.childNodes) visitRecursive(item, "${node.nameAsString}.")
+                        }
+                        if (node is AnnotationDeclaration) {
+                            found.add(
+                                IndexEntry(
+                                    "$prefix${node.nameAsString}",
+                                    "$pack.$prefix${node.nameAsString}",
+                                    "https://github.com/$user/$repo/blob/${contents.path}",
+                                    IndexEntryKind.ANNOTATION,
+                                    repository,
+                                ),
+                            )
+                            for (item in node.childNodes) visitRecursive(item, "${node.nameAsString}.")
+                        }
+                    }
 
+                    for (node in unit.childNodes) visitRecursive(node, "")
+                }
+            }
+        }.exceptionOrNull()?.printStackTrace()
+    }
 }

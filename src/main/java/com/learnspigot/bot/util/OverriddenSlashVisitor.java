@@ -13,7 +13,7 @@ import revxrsal.commands.jda.slash.JDAParser;
 import java.util.HashMap;
 import java.util.Map;
 
-//TODO remove this when Lamp adds name-value pair support for suggestions
+// TODO remove this when Lamp adds name-value pair support for suggestions
 /**
  * This class is a 1:1 copy of {@link revxrsal.commands.jda.JDAVisitors#slashCommands(JDA, SlashActorFactory)},
  * except it registers a {@link BlockingJDAListener}, which prevents Lamp from trying to parse

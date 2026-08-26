@@ -11,35 +11,42 @@ import java.net.http.HttpResponse
 import java.time.Duration
 
 object Http {
-
-    private val client: HttpClient = HttpClient.newBuilder()
-        .version(HttpClient.Version.HTTP_2)
-        .connectTimeout(Duration.ofSeconds(5))
-        .build()
+    private val client: HttpClient =
+        HttpClient
+            .newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .connectTimeout(Duration.ofSeconds(5))
+            .build()
 
     private val gson: Gson = GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create()
 
-    fun <T> getJson(url:String,clazz: Class<T>): T? {
-        val req = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Accept", "application/json")
-            .GET()
-            .build()
+    fun <T> getJson(
+        url: String,
+        clazz: Class<T>,
+    ): T? {
+        val req =
+            HttpRequest
+                .newBuilder()
+                .uri(URI.create(url))
+                .header("Accept", "application/json")
+                .GET()
+                .build()
         val res = client.send(req, HttpResponse.BodyHandlers.ofInputStream())
-        if(res.statusCode()!=200||res.body()==null)return null
+        if (res.statusCode() != 200 || res.body() == null) return null
         return runCatching {
             gson.fromJson(InputStreamReader(res.body()), clazz)
         }.getOrNull()
     }
 
-    fun getPlain(url:String): InputStream? {
-        val req = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Accept","text/plain")
-            .GET()
-            .build()
+    fun getPlain(url: String): InputStream? {
+        val req =
+            HttpRequest
+                .newBuilder()
+                .uri(URI.create(url))
+                .header("Accept", "text/plain")
+                .GET()
+                .build()
         val res = client.send(req, HttpResponse.BodyHandlers.ofInputStream())
         return res.body()
     }
-
 }
