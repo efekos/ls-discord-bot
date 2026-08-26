@@ -31,6 +31,7 @@ import com.learnspigot.bot.showcase.ShowcaseListener
 import com.learnspigot.bot.starboard.StarboardListener
 import com.learnspigot.bot.suggestion.SuggestionListener
 import com.learnspigot.bot.util.ForumKeepAlive
+import com.learnspigot.bot.util.OverriddenSlashVisitor
 import com.learnspigot.bot.util.PermissionRole
 import com.learnspigot.bot.verification.FriendInviteCommand
 import com.learnspigot.bot.verification.VerificationListener
@@ -53,6 +54,7 @@ import net.dv8tion.jda.api.utils.ChunkingFilter
 import net.dv8tion.jda.api.utils.MemberCachePolicy
 import revxrsal.commands.jda.JDALamp
 import revxrsal.commands.jda.JDAVisitors
+import revxrsal.commands.jda.actor.SlashActorFactory
 import revxrsal.commands.jda.actor.SlashCommandActor
 import java.time.Duration
 import java.time.Instant
@@ -165,7 +167,7 @@ class Bot {
             IndexCommand()
         )
 
-        lamp.accept(JDAVisitors.slashCommands(jda))
+        lamp.accept(OverriddenSlashVisitor.slashCommands(jda, SlashActorFactory.defaultFactory()))
 
         ReferenceCommand().register()
     }
