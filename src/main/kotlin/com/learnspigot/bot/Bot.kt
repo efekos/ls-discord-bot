@@ -8,6 +8,7 @@ import com.learnspigot.bot.counting.VoteBanListener
 import com.learnspigot.bot.embed.EmbedCommand
 import com.learnspigot.bot.help.*
 import com.learnspigot.bot.help.search.SearchHelpCommand
+import com.learnspigot.bot.index.IndexCommand
 import com.learnspigot.bot.intellijkey.GetKeyCommand
 import com.learnspigot.bot.intellijkey.KeysLeftCommand
 import com.learnspigot.bot.knowledgebase.EndPollCommand
@@ -62,6 +63,7 @@ class Bot {
         lateinit var jda: JDA private set
 
         fun fromEnv(name: String): String = env.get(name) ?: System.getenv(name) ?: "".also { NullPointerException("Unable to find ENV Variable: $name").printStackTrace() }
+        fun fromEnvUnsafe(name: String): String? = env.get(name) ?: System.getenv(name)
     }
 
     init {
@@ -157,6 +159,7 @@ class Bot {
             VCCommand(),
             FriendInviteCommand(),
             VoteBanCommand(),
+            IndexCommand()
         )
 
         lamp.accept(JDAVisitors.slashCommands(jda))
