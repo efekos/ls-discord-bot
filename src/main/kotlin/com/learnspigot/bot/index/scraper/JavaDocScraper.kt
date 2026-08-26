@@ -31,8 +31,11 @@ class JavaDocScraper(val entrypoint: String) : Scraper {
                 val latch = CountDownLatch(classes!!.size)
                 for (element in classes) {
                     val href = element.attr("href")
-                    if(href.isNotBlank()) Scraper.poolExecutor.submit {
-                        scrapeClassPage("$homeUrl$href",latch) { found.add(it) }
+                    if(href.isNotBlank()){
+                        if(href.contains("https"))latch.countDown()
+                        else Scraper.poolExecutor.submit {
+                            scrapeClassPage("$homeUrl$href",latch) { found.add(it) }
+                        }
                     }
                 }
 
@@ -105,7 +108,7 @@ class JavaDocScraper(val entrypoint: String) : Scraper {
                     )
                 )
                 if(canLog)println("[${Thread.currentThread().name}] added $className")
-            }
+            } else System.err.println("[${Thread.currentThread().name}] $url gave nothing")
 
             client.close()
             latch.countDown()

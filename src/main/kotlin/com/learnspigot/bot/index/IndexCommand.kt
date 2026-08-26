@@ -107,7 +107,7 @@ class IndexCommand {
                             * ${IndexEntryKind.EVENT.emoji.formatted} ${found.count { it.kind == IndexEntryKind.EVENT }} events,
                             * ${IndexEntryKind.RECORD.emoji.formatted} ${found.count { it.kind == IndexEntryKind.RECORD }} records,
                             * ${IndexEntryKind.UNKNOWN.emoji.formatted} and ${found.count { it.kind == IndexEntryKind.UNKNOWN }} other unresolved entries
-                            The index results for this entrypoint have been saved to a JSON file. Everything will be automatically reloaded when the bot launches.
+                            The index results for this entrypoint have been saved to a BSON file. Everything will be automatically reloaded when the bot launches.
                             
                             You can use `/index invalidate` to delete the cache any time.
                         """.trimIndent()
